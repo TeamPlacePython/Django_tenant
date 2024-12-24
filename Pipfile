@@ -12,6 +12,7 @@ django-htmx = "*"
 psycopg2-binary = "*"
 
 [dev-packages]
+django-browser-reload = "*"
 
 [requires]
 python_version = "3.12"

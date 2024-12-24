@@ -1,9 +1,7 @@
-name: tenants
-
 services:
   postgres:
     image: postgres:latest
-    container_name: postgres-container
+    container_name: postgres_container
     ports:
       - "5432:5432"
     environment:
@@ -11,7 +9,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  postgres-data:
+  postgres_data:

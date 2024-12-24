@@ -2,14 +2,14 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.static import static
 from django.conf import settings
-from users.views import profile_view
-from home.views import *
+from apps.users.views import profile_view
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("__reload__/", include("django_browser_reload.urls")),
     path("accounts/", include("allauth.urls")),
-    path("", include("home.urls")),
-    path("profile/", include("users.urls")),
+    path("", include("apps.home.urls", namespace="home")),
+    path("profile/", include("apps.users.urls", namespace="users")),
     path("@<username>/", profile_view, name="profile"),
 ]
 

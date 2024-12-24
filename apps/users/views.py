@@ -8,6 +8,7 @@ from django.contrib.auth.views import redirect_to_login
 from django.contrib import messages
 from django.urls import reverse
 from allauth.account.utils import send_email_confirmation
+
 from .forms import ProfileForm
 from .forms import EmailForm
 
@@ -18,9 +19,10 @@ def profile_view(request, username=None):
     else:
         try:
             profile = request.user.profile
-        except:
+        except Exception:
             return redirect_to_login(request.get_full_path())
-    return render(request, "users/profile.html", {"profile": profile})
+    context = {"profile": profile}
+    return render(request, "users/profile.html", context=context)
 
 
 @login_required
@@ -35,16 +37,9 @@ def profile_edit_view(request):
             form.save()
             return redirect("profile")
 
-    if request.path == reverse("profile-onboarding"):
-        onboarding = True
-    else:
-        onboarding = False
-
-    return render(
-        request,
-        "users/profile_edit.html",
-        {"form": form, "onboarding": onboarding},
-    )
+    onboarding = request.path == reverse("users:profile-onboarding")
+    context = {"form": form, "onboarding": onboarding}
+    return render(request, "users/profile_edit.html", context=context)
 
 
 @login_required
@@ -81,11 +76,9 @@ def profile_emailchange(request):
             # Then send confirmation email
             send_email_confirmation(request, request.user)
 
-            return redirect("profile-settings")
         else:
             messages.warning(request, "Form not valid")
-            return redirect("profile-settings")
-
+        return redirect("profile-settings")
     return redirect("home")
 
 
@@ -97,9 +90,9 @@ def profile_emailverify(request):
 
 @login_required
 def profile_delete_view(request):
-    user = request.user
     if request.method == "POST":
         logout(request)
+        user = request.user
         user.delete()
         messages.success(request, "Account deleted, what a pity")
         return redirect("home")
