@@ -35,7 +35,7 @@ def profile_edit_view(request):
         )
         if form.is_valid():
             form.save()
-            return redirect("profile")
+            return redirect("users:profile")
 
     onboarding = request.path == reverse("users:profile-onboarding")
     context = {"form": form, "onboarding": onboarding}
@@ -67,7 +67,7 @@ def profile_emailchange(request):
                 .exists()
             ):
                 messages.warning(request, f"{email} is already in use.")
-                return redirect("profile-settings")
+                return redirect("users:profile-settings")
 
             form.save()
 
@@ -78,14 +78,14 @@ def profile_emailchange(request):
 
         else:
             messages.warning(request, "Form not valid")
-        return redirect("profile-settings")
-    return redirect("home")
+        return redirect("users:profile-settings")
+    return redirect("home:home-index")
 
 
 @login_required
 def profile_emailverify(request):
     send_email_confirmation(request, request.user)
-    return redirect("profile-settings")
+    return redirect("users:profile-settings")
 
 
 @login_required
@@ -95,6 +95,6 @@ def profile_delete_view(request):
         user = request.user
         user.delete()
         messages.success(request, "Account deleted, what a pity")
-        return redirect("home")
+        return redirect("home:home-index")
 
     return render(request, "users/profile_delete.html")
