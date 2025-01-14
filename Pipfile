@@ -10,6 +10,13 @@ django-cleanup = "*"
 django-allauth = "*"
 django-htmx = "*"
 psycopg2-binary = "*"
+django-environ = "*"
+django-tenants = "*"
+django-colorfield = "*"
+gunicorn = "*"
+whitenoise = "*"
+django-storages = "*"
+boto3 = "*"
 
 [dev-packages]
 django-browser-reload = "*"

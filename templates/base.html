@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Django Template">
     
-    <title>Project Title</title>
+    <title>{% if request.tenant %}{{ request.tenant.name }}{% else %}Django Tenants{% endif %}</title>
     <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://unpkg.com/htmx.org@2.0.2"></script>
@@ -58,7 +58,7 @@
             @apply flex items-center gap-2 h-12 px-4 hover:bg-[rgba(31,41,55,0.3)] rounded-lg;
         }
         .hoverlist>* {
-            @apply hover:bg-gray-100 rounded-md transition duration-150;
+            @apply hover:bg-[rgba(31,41,55,0.3)] rounded-md transition duration-150 ease-in-out;
         }
         .hoverlist>*>a {
             @apply flex items-center p-2;
@@ -109,7 +109,8 @@
 
     {% include 'includes/messages.html' %}
 
-    {% include 'includes/header.html' %}
+    {% load header %}
+    {% header_view request %}
 
     {% block layout %}{% endblock %}
 

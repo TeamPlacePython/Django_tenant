@@ -1,28 +1,31 @@
 from pathlib import Path
+from environ import Env
+
+env = Env()
+env.read_env()
+
+ENVIRONMENT = env("ENVIRONMENT", default="development")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = (
-    "django-insecure-hszj7-&6y_1jm=w^y0r_8rr(^*-njp_#cp9d@%!(rtta+6%w%l"
-)
+SECRET_KEY = env("SECRET_KEY", default="secret_key")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+if ENVIRONMENT == "development":
+    DEBUG = True
+else:
+    DEBUG = False
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "*"]
 
 CSRF_TRUSTED_ORIGINS = ["https://*"]
 
-
 # Application definition
-
-INSTALLED_APPS = [
+SHARED_APPS = [
+    "django_tenants",
+    "apps.tenant_manager.apps.TenantManagerConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -35,13 +38,33 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "django_htmx",
+    "colorfield",
     "apps.home.apps.HomeConfig",
     "apps.users.apps.UsersConfig",
+]
+
+TENANT_APPS = (
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.sites",
+    "allauth",
+    "allauth.account",
+    "apps.home.apps.HomeConfig",
+    "apps.users.apps.UsersConfig",
+)
+
+INSTALLED_APPS = SHARED_APPS + [
+    app for app in TENANT_APPS if app not in SHARED_APPS
 ]
 
 SITE_ID = 1
 
 MIDDLEWARE = [
+    "django_tenants.middleware.main.TenantMainMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -52,6 +75,7 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
     "django_browser_reload.middleware.BrowserReloadMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -60,6 +84,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 ROOT_URLCONF = "config.urls"
+PUBLIC_SCHEMA_URLCONF = "config.urls_public"
 
 TEMPLATES = [
     {
@@ -82,25 +107,35 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+if ENVIRONMENT == "development":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django_tenants.postgresql_backend",
+            "NAME": env("POSTGRES_DB"),
+            "USER": env("POSTGRES_USER"),
+            "PASSWORD": env("POSTGRES_PASSWORD"),
+            "HOST": env("POSTGRES_HOST"),
+            "PORT": env("POSTGRES_PORT"),
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django_tenants.postgresql_backend",
+            "NAME": env("PGDATABASE"),
+            "USER": env("PGUSER"),
+            "PASSWORD": env("PGPASSWORD"),
+            "HOST": env("PGHOST"),
+            "PORT": env("PGPORT"),
+        }
+    }
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": "postgres",
-#         "USER": "postgres",
-#         "PASSWORD": "postgres",
-#         "HOST": "localhost",
-#         "PORT": 5432,
-#     }
-# }
 
+DATABASE_ROUTERS = ("django_tenants.routers.TenantSyncRouter",)
+
+TENANT_MODEL = "tenant_manager.Tenant"
+TENANT_DOMAIN_MODEL = "tenant_manager.Domain"
+SHOW_PUBLIC_IF_NO_TENANT_FOUND = env("SHOW_PUBLIC_IF_NO_TENANT_FOUND")
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -136,9 +171,25 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
+MULTITENANT_RELATIVE_MEDIA_ROOT = "tenants/%s"
+
+AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
+AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
+AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
+
+STORAGES = {
+    "default": {
+        "BACKEND": "apps.home.storage.CustomSchemaStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -151,5 +202,5 @@ ACCOUNT_SIGNUP_REDIRECT_URL = (
 )
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-ACCOUNT_AUTHENTICATION_METHOD = "email"
-ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_AUTHENTICATION_METHOD = env("ACCOUNT_AUTHENTICATION_METHOD")
+ACCOUNT_EMAIL_REQUIRED = env("ACCOUNT_EMAIL_REQUIRED")

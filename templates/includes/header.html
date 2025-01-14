@@ -1,9 +1,10 @@
 {% load static %}
-<header class="flex items-center justify-between bg-gray-800 h-20 px-8 text-white sticky top-0 z-40">
+<header class="flex items-center justify-between bg-gray-800 h-20 px-8 text-white sticky top-0 z-40"
+{% if color %}style="background-color: {{ color }};"{% endif %}>
     <div>
         <a class="flex items-center gap-2" href="/">
-            <img class="h-6" src="{% static 'images/logo.svg' %}" alt="Logo"/>
-            <span class="text-lg font-bold">Project Title</span>
+            <img class="h-12" src="{% if logo %}{{ logo.url }}{% else %}{% static 'images/logo.png' %}{% endif %}" alt="Logo"/>
+            <span class="text-lg font-bold">{% if request.tenant %}{{ request.tenant.name }}{% else %}Django Tenants{% endif %}</span>
         </a>
     </div>
     <nav class="block relative">
@@ -20,6 +21,7 @@
                 x-transition:enter="duration-300 ease-out"
                 x-transition:enter-start="opacity-0 -translate-y-5 scale-90"
                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                {% if color %}style="background-color: {{ color }}; color: white;"{% endif %}
                 >
                     <ul class="hoverlist [&>li>a]:justify-end">
                         <li><a href="{% url 'users:profile' %}">My Profile</a></li>
